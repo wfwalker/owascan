@@ -1,0 +1,12 @@
+{
+  "name": "casperjshello",
+  "version": "0.0.1",
+  "description": "try using casper",
+  "main": "server.js",
+  "dependencies": {
+    "phantomjs": "*",    
+    "casperjs": "*"
+  },
+  "author": "Bill Walker",
+  "license": "MPL, v 2.0"
+}
