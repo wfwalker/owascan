@@ -44,7 +44,15 @@ casper.viewport(320, 480).then(function() {
 	this.capture('frontpage.png');
 });
 
-casper.then(function(){
+casper.options.onResourceReceived = function(unused, response) {
+	console.log("RESOURCE RECEIVED " + response.url + " " + response.bodySize + " " + response.contentType);
+	// TODO: look for expires header
+    // require('utils').dump(response.headers);
+}
+
+casper.then(function(response){
+    require('utils').dump(response.headers);
+
 	var scriptSources = this.evaluate(getScriptSources);
 	var stylesheetSources = this.evaluate(getStylesheetSources);
 	var viewports = this.evaluate(getMetaViewport);
