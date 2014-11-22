@@ -15,7 +15,7 @@ function findFileSuffix(inSuffix) {
 
 	for (var key in gResources) {
 		if (gResources.hasOwnProperty(key) && key.indexOf(inSuffix) >= 0) {
-			scripts.push(key);
+			scripts.push(gResources[key]);
 		}
 	}
 
@@ -63,6 +63,7 @@ casper.start(cmdLineArgs[0], function() {
 });
 
 casper.viewport(320, 480).then(function() {
+	// TODO: make unique filename based on... timestamp?
 	this.capture('frontpage.png');
 });
 
@@ -73,40 +74,22 @@ casper.options.onResourceReceived = function(unused, response) {
 }
 
 casper.then(function(response){
+	var gReport = {};
 	// TODO: look for etags and cacheing
-    // require('utils').dump(response.headers);
-    console.log(response.contentType + ' size: ' + response.bodySize);
-    console.log('resource size: ' + sumResourceSize());
 
-	var scriptSources = findFileSuffix('.js');
-	var stylesheetSources = findFileSuffix('.css');
+    gReport.body = response;
+    gReport.totalSize = sumResourceSize();
 
-	var viewports = this.evaluate(getMetaViewport);
-	var appcacheManifests = this.evaluate(getAppcacheManifest);
+    // TODO: does this work?
+    findCacheingHeaders(response.headers);
 
-    console.log('\n' + scriptSources.length + ' scripts found');
+	gReport.scriptsLoaded = findFileSuffix('.js');
+	gReport.stylesheetsLoaded = findFileSuffix('.css');
 
-	for (var i = 0; i < scriptSources.length; ++i) {
-		console.log('    -- "' + scriptSources[i] + '"');			
-	}
+	gReport.viewports = this.evaluate(getMetaViewport);
+	gReport.appcacheManifests = this.evaluate(getAppcacheManifest);
 
-    console.log('\n' + stylesheetSources.length + ' stylesheets found');
-
-	for (var i = 0; i < stylesheetSources.length; ++i) {
-		console.log('    -- "' + stylesheetSources[i] + '"');
-	}
-
-    console.log('\n' + viewports.length + ' viewports found');
-
-	for (var i = 0; i < viewports.length; ++i) {
-		console.log('    -- "' + viewports[i] + '"');
-	}
-
-    console.log('\n' + appcacheManifests.length + ' appcache manifests found');
-
-	for (var i = 0; i < appcacheManifests.length; ++i) {
-		console.log('    -- "' + appcacheManifests[i] + '"');
-	}
+	require('utils').dump(gReport);
 });
 
 casper.run();
