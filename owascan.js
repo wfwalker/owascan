@@ -4,22 +4,44 @@
 var casper = require('casper').create();
 var args = require('system').args;
 
+var gResources = {};
+
 var cmdLineArgs = args.slice(4);
 
 console.log('scanning ' + cmdLineArgs[0]);
 
-function getScriptSources() {
-    var scripts = document.querySelectorAll('script');
-    return Array.prototype.map.call(scripts, function(e) {
-        return e.getAttribute('src');
-    });
+function findFileSuffix(inSuffix) {
+    var scripts = [];
+
+	for (var key in gResources) {
+		if (gResources.hasOwnProperty(key) && key.indexOf(inSuffix) >= 0) {
+			scripts.push(key);
+		}
+	}
+
+	return scripts;
 }
 
-function getStylesheetSources() {
-    var stylesheets = document.querySelectorAll('link[rel="stylesheet"]');
-    return Array.prototype.map.call(stylesheets, function(e) {
-        return e.getAttribute('href');
-    });
+function findCacheingHeaders(inHeaders) {
+	for (var index in inHeaders) {
+		if (inHeaders[index].name == 'Etag' ||
+			inHeaders[index].name == 'Cache-Control' ||
+			inHeaders[index].name == 'Last-Modified') {
+			console.log(inHeaders[index].name + ' ' + inHeaders[index].value);
+		}
+	}
+}
+
+function sumResourceSize() {
+    var totalSize = 0;
+
+	for (var key in gResources) {
+		if (gResources.hasOwnProperty(key)) {
+			totalSize = totalSize + gResources[key].bodySize;
+		}
+	}
+
+	return totalSize;	
 }
 
 function getMetaViewport() {
@@ -45,27 +67,27 @@ casper.viewport(320, 480).then(function() {
 });
 
 casper.options.onResourceReceived = function(unused, response) {
-	console.log("RESOURCE RECEIVED " + response.url + " " + response.bodySize + " " + response.contentType);
-	// TODO: look for expires header
-    // require('utils').dump(response.headers);
+	gResources[response.url] = response;
+	// TODO: look for expires headers
+    findCacheingHeaders(response.headers);
 }
 
 casper.then(function(response){
-    require('utils').dump(response.headers);
+	// TODO: look for etags and cacheing
+    // require('utils').dump(response.headers);
+    console.log(response.contentType + ' size: ' + response.bodySize);
+    console.log('resource size: ' + sumResourceSize());
 
-	var scriptSources = this.evaluate(getScriptSources);
-	var stylesheetSources = this.evaluate(getStylesheetSources);
+	var scriptSources = findFileSuffix('.js');
+	var stylesheetSources = findFileSuffix('.css');
+
 	var viewports = this.evaluate(getMetaViewport);
 	var appcacheManifests = this.evaluate(getAppcacheManifest);
 
     console.log('\n' + scriptSources.length + ' scripts found');
 
 	for (var i = 0; i < scriptSources.length; ++i) {
-		if (scriptSources[i] == '') {
-			console.log('    -- INLINE');			
-		} else {
-			console.log('    -- "' + scriptSources[i] + '"');			
-		}
+		console.log('    -- "' + scriptSources[i] + '"');			
 	}
 
     console.log('\n' + stylesheetSources.length + ' stylesheets found');
@@ -85,7 +107,6 @@ casper.then(function(response){
 	for (var i = 0; i < appcacheManifests.length; ++i) {
 		console.log('    -- "' + appcacheManifests[i] + '"');
 	}
-
 });
 
 casper.run();
