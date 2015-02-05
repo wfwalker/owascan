@@ -10,6 +10,7 @@ var cmdLineArgs = args.slice(4);
 
 console.log('scanning ' + cmdLineArgs[0]);
 
+// TODO: reuse thecount code for mapping file names to libraries
 function findFileSuffix(inSuffix) {
     var scripts = [];
 
@@ -22,6 +23,7 @@ function findFileSuffix(inSuffix) {
 	return scripts;
 }
 
+// TODO: make this available to templating engine, or something
 function findCacheingHeaders(inHeaders) {
 	for (var index in inHeaders) {
 		if (inHeaders[index].name == 'Etag' ||
@@ -62,6 +64,8 @@ casper.start(cmdLineArgs[0], function() {
 	this.echo('title: ' + this.getTitle());
 });
 
+// casper.userAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X)');
+
 casper.viewport(320, 480).then(function() {
 	// TODO: make unique filename based on... timestamp?
 	this.capture('frontpage.png');
@@ -70,7 +74,6 @@ casper.viewport(320, 480).then(function() {
 casper.options.onResourceReceived = function(unused, response) {
 	gResources[response.url] = response;
 	// TODO: look for expires headers
-    findCacheingHeaders(response.headers);
 }
 
 casper.then(function(response){
@@ -79,9 +82,6 @@ casper.then(function(response){
 
     gReport.body = response;
     gReport.totalSize = sumResourceSize();
-
-    // TODO: does this work?
-    findCacheingHeaders(response.headers);
 
 	gReport.scriptsLoaded = findFileSuffix('.js');
 	gReport.stylesheetsLoaded = findFileSuffix('.css');
