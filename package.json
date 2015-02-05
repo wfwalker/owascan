@@ -4,8 +4,16 @@
   "description": "try using casper",
   "main": "server.js",
   "dependencies": {
-    "phantomjs": "*",    
-    "casperjs": "*"
+    "phantomjs": "*",
+    "casperjs": "*",
+    "node-firefox-start-simulator": "^1.1.0",
+    "node-firefox-install-app": "^1.0.0",
+    "node-firefox-launch-app": "^1.0.1",
+    "node-firefox-uninstall-app": "^1.0.0",
+    "system": "^0.1.0",
+    "wrench": "^1.5.8",
+    "node-firefox-connect": "^1.0.0",
+    "node-firefox-find-app": "^1.0.0"
   },
   "author": "Bill Walker",
   "license": "MPL, v 2.0"
