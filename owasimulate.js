@@ -1,4 +1,6 @@
-// try launching simulator with the supplied m.site
+// Take a given URL, make a splashpack for it, run it in the simulator.
+
+// prerequisites:
 
 var startSimulator = require('node-firefox-start-simulator');
 var launchApp = require('node-firefox-launch-app');
@@ -12,18 +14,20 @@ var args = require('system').args;
 var wrench = require('wrench');
 var fs = require('fs');
 
+// parse command-line args
+
 var cmdLineArgs = args.slice();
 var appURL = url.parse(args[2]);
 var safeString = appURL.host;
 
-console.log(safeString);
- 
-// TODO: make a copy of ../splashpack into unqiuely named folder
+// Make a copy of ../splashpack in a unqiuely named folder
 
 wrench.copyDirSyncRecursive('../splashpack', safeString, {
 	forceDelete: true,
 	filter: '\.git'
 });
+
+// helper function that reads a file, replaces a regex with a string, writes back the file
 
 function fixFile(filename, fileRegex, newString) {
 	var data = fs.readFileSync(filename, 'utf8');
@@ -39,18 +43,22 @@ function fixFile(filename, fileRegex, newString) {
 fixFile(safeString + '/index.html', /http:\/\/your-mobile-site-url.com/g, args[2]);
 
 // Modify manifest.webapp and add your app name, description and developer details.
-fixFile(safeString + '/manifest.webapp', /App name/g, safeString);
-fixFile(safeString + '/manifest.webapp', /Developer name/g, safeString);
-var manifest = JSON.parse(fixFile(safeString + '/manifest.webapp', /Your app description./g, safeString));
+var manifestString = fs.readFileSync(safeString + '/manifest.webapp', 'utf8');
+var manifest = JSON.parse(manifestString);
+manifest.description = 'demonstration of ' + safeString + ' as app'
+manifest.developer.name = 'owasimulate script';
+manifest.name = safeString;
+manifest.chrome.navigation = false;
+fs.writeFileSync(safeString + '/manifest.webapp', JSON.stringify(manifest));
 
 // Modify static/script.js and replace the URL with your app URL on line 10.
 fixFile(safeString + '/static/script.js', /http:\/\/your-mobile-site-url.com/g, args[2]);
 
 // TODO: Replace the icons in static/ with your own at 60px by 60px and 128px by 128px.
 
-// launch simulator with that app
+// start the simulator, install the splashpack we just made, then launch that app
 
-startSimulator({ version: '2.0' }).then(function(simulator) {
+startSimulator({ version: '2.2' }).then(function(simulator) {
 	connect(simulator.port).then(function(client) {
 		installApp({
 			appPath: safeString,
