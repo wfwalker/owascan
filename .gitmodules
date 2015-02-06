@@ -1,0 +1,3 @@
+[submodule "splashpack"]
+	path = splashpack
+	url = https://github.com/louisstow/splashpack.git
